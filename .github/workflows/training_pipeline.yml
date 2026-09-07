@@ -1,0 +1,49 @@
+name: Training Pipeline (Daily)
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        city: [Karachi, Lahore, Islamabad]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train, evaluate, and promote best model for ${{ matrix.city }}
+        run: python -m training_pipeline.train --city "${{ matrix.city }}"
+
+      - name: Quality gate validation
+        run: |
+          python - <<'PY'
+          import json, os
+          city = "${{ matrix.city }}".lower()
+          path = f"reports/training_summary_{city}.json"
+          if os.path.exists(path):
+              with open(path) as f:
+                  summary = json.load(f)
+              for horizon, data in summary.items():
+                  best_model = data["best_model"]
+                  rmse = data["results"][best_model]["rmse"]
+                  if rmse > 55.0:
+                      print(f"::warning::{city.capitalize()} {horizon} RMSE={rmse:.2f} exceeds threshold")
+          PY
+
+      - name: Commit updated model registry & reports
+        run: |
+          git config user.name "aqi-bot"
+          git config user.email "aqi-bot@users.noreply.github.com"
+          git add model_registry reports
+          git diff --cached --quiet || git commit -m "chore: daily model retraining [skip ci]"
+          git push

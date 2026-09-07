@@ -1,0 +1,53 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment files (NEVER ship secrets to client)
+.env
+*.env
+secrets.yaml
+credentials.json
+*.pem
+*.key
+
+# Raw / large data (deliver via cloud storage or note in README, not git)
+/data/raw/
+/data/interim/
+
+# Airflow runtime files (not needed for deliverable)
+airflow/logs/
+airflow/airflow.db
+airflow/airflow.cfg
+airflow/webserver_config.py
+airflow/*.pid
+airflow/standalone_admin_password.txt
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# ML experiment tracking (not the final models)
+mlruns/
+mlflow.db
+*.log
+
+# Python packaging
+*.egg-info/
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
