@@ -5,29 +5,39 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   run-feature-pipeline:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        city: [Karachi, Lahore, Islamabad]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run feature pipeline for ${{ matrix.city }}
-        run: python -m feature_pipeline.run --city "${{ matrix.city }}"
+      - name: Run feature pipeline for all cities
+        run: python -m feature_pipeline.run --all-cities
 
-      - name: Commit updated feature store
+      - name: Commit and push updated feature store
         run: |
-          git config user.name "aqi-bot"
-          git config user.email "aqi-bot@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add feature_store/data/*.parquet
-          git diff --cached --quiet || git commit -m "chore: hourly feature update [skip ci]"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: hourly feature update [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "No new features to commit."
+          fi

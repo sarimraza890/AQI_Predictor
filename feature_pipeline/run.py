@@ -33,7 +33,12 @@ def run(city: str = DEFAULT_CITY, start_date: Optional[str] = None, end_date: Op
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Feature Ingestion Pipeline")
     parser.add_argument("--city", default=DEFAULT_CITY, choices=list(CITIES.keys()), help="Target city")
+    parser.add_argument("--all-cities", action="store_true", help="Ingest for all configured cities")
     parser.add_argument("--start-date", default=None, help="Backfill start date (YYYY-MM-DD)")
     parser.add_argument("--end-date", default=None, help="Backfill end date (YYYY-MM-DD)")
     args = parser.parse_args()
-    run(args.city, args.start_date, args.end_date)
+
+    target_cities = list(CITIES.keys()) if args.all_cities else [args.city]
+    for c in target_cities:
+        run(c, args.start_date, args.end_date)
+
